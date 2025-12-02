@@ -1,0 +1,60 @@
+// --- PALETA DE COLORES (Tema Oscuro Moderno) ---
+
+// Colores Principales
+$clr-primary: #06b6d4; // Cyan eléctrico
+$clr-primary-hover: #22d3ee;
+$clr-danger: #ef4444; // Rojo moderno
+$clr-success: #22c55e; // Verde vibrante
+$clr-warning: #eab308; // Amarillo
+$clr-black: #000000; // Negro puro para contrastes
+
+// Fondos (Base)
+$bg-app-overlay: rgba(15, 23, 42, 0.95); // Fondo casi negro azulado
+$bg-panel: rgba(30, 41, 59, 0.6); // Paneles semitransparentes
+$bg-panel-hover: rgba(51, 65, 85, 0.5); // Hover en paneles
+$card-bg: #1e293b; // Fondo sólido para modales
+
+// Textos
+$text-main: #f8fafc; // Blanco hielo
+$text-muted: #94a3b8; // Gris azulado
+$text-dark: #0f172a; // Para textos sobre fondos claros
+
+// --- EFECTOS GLASSMORPHISM ---
+
+// Bordes sutiles
+$glass-border: 1px solid rgba(255, 255, 255, 0.1);
+$glass-border-light: 1px solid rgba(255, 255, 255, 0.2);
+
+// Sombras
+$shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+$shadow-lg: 0 10px 40px -10px rgba(0, 0, 0, 0.7);
+$shadow-glow: 0 0 15px rgba(6, 182, 212, 0.3);
+
+// Desenfoque
+$backdrop-blur: blur(12px);
+
+// --- DIMENSIONES Y CONFIGURACIÓN ---
+
+$header-height: 70px;
+$sidebar-width: 340px;
+$radius-main: 16px;
+$radius-sm: 8px;
+$radius-round: 50px;
+
+// --- ESPACIADOS (Las variables que faltaban) ---
+$size-small: 0.5rem;
+$size-medium: 1rem;
+$size-large: 1.5rem;
+$size-xlarge: 2rem;
+
+// --- ANIMACIONES ---
+$transition-fast: all 0.2s ease-in-out;
+$transition-medium: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// --- Z-INDEX ---
+$z-index-app: 99999;
+$z-index-modal: 100000;
+$z-index-toast: 100001;
+
+// --- RESPONSIVE BREAKPOINTS ---
+$mobile-break: 900px; // A partir de aquí hacia abajo, es móvil/tablet

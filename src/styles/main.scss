@@ -1,0 +1,900 @@
+@use 'variables';
+@use 'helpers';
+
+// --- RESET GLOBAL (Dentro del Shadow DOM) ---
+:host {
+  all: initial;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  color: variables.$text-main;
+  line-height: 1.5;
+
+  /* Aseguramos que el overlay ocupe exactamente la ventana */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: variables.$z-index-app;
+  pointer-events: none;
+}
+
+.iu {
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: variables.$bg-app-overlay;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  @include helpers.custom-scrollbar;
+}
+
+// --- LAYOUT ESTRUCTURAL ---
+
+.overlay {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; // Vital: Evita que el scroll se salga fuera
+}
+
+// Contenedor principal que envuelve Sidebar y Resultados
+// Buscamos la sección que tiene la clase .flex (donde están sidebar y article)
+.overlay > section.flex {
+  // --- ARREGLO SCROLL 1: Definir altura exacta ---
+  // Calculamos: 100% de la altura menos los 70px del header
+  height: calc(100vh - #{variables.$header-height});
+  margin-top: variables.$header-height; // Empujamos hacia abajo lo que ocupa el header
+  overflow: hidden; // Cortamos lo que sobre
+  width: 100%;
+}
+
+// --- HEADER / TOOLBAR ---
+
+.app-header {
+  // --- ARREGLO HEADER 1: Forzar altura y evitar encogimiento ---
+  height: variables.$header-height;
+  min-height: variables.$header-height; // Obligatorio
+  flex-shrink: 0; // Prohibido encogerse
+
+  width: 100%;
+  position: absolute; // Lo fijamos arriba dentro del overlay
+  top: 0;
+  left: 0;
+
+  background: rgba(15, 23, 42, 0.95); // Un poco más opaco para evitar transparencias raras
+  backdrop-filter: blur(10px);
+  border-bottom: variables.$glass-border;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+
+  .progressbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    appearance: none;
+    background: transparent;
+    border: none;
+
+    &::-webkit-progress-bar {
+      background: transparent;
+    }
+    &::-webkit-progress-value {
+      background: linear-gradient(90deg, variables.$clr-primary, variables.$clr-success);
+      box-shadow: 0 0 10px variables.$clr-primary;
+    }
+  }
+}
+
+.app-header-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 100%; // Asegura que el contenido llene la altura del header
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+
+  // Efecto hover para el nuevo logo
+  &:hover .app-logo {
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6));
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1;
+    color: variables.$text-main;
+
+    span:last-child {
+      color: variables.$clr-primary;
+      letter-spacing: 1px;
+    }
+  }
+}
+
+// --- SIDEBAR & CONTENT ---
+
+.app-sidebar {
+  width: variables.$sidebar-width;
+  min-width: 300px;
+  background: rgba(30, 41, 59, 0.4);
+  border-right: variables.$glass-border;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  // --- ARREGLO SCROLL 2: Scroll independiente ---
+  height: 100%; // Ocupa toda la altura disponible del contenedor padre
+  overflow-y: auto; // Scroll solo aquí si hace falta
+  @include helpers.custom-scrollbar;
+
+  p {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    color: variables.$text-muted;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+}
+
+.results-container {
+  flex: 1;
+  padding: 2rem;
+
+  // Mantiene el scroll
+  height: 100%;
+  overflow-y: auto;
+
+  display: grid;
+  // CAMBIO 1: Reducimos un poco el ancho mínimo para que respire mejor (350 -> 300)
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+  // CAMBIO 2: ¡VITAL! Esto evita que se "escache".
+  // Le dice que cada fila mida lo que ocupa su contenido, ni más ni menos.
+  grid-auto-rows: max-content;
+
+  gap: 1rem;
+  align-content: start;
+  @include helpers.custom-scrollbar;
+  padding-bottom: 4rem; // Espacio extra abajo para que no se corte el último elemento
+}
+
+// --- COMPONENTES UI ---
+
+// Botones
+button,
+.btn {
+  border: none;
+  border-radius: variables.$radius-sm;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: variables.$transition-fast;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: variables.$glass-border;
+  color: variables.$text-main;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.copy-list {
+    background: variables.$clr-primary;
+    color: variables.$text-dark; // Texto oscuro para contraste
+    border: none;
+    &:hover {
+      background: variables.$clr-primary-hover;
+    }
+  }
+
+  &.btn-danger,
+  &.unfollow {
+    background: rgba(239, 68, 68, 0.15);
+    color: variables.$clr-danger;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    width: 100%;
+    margin-top: auto;
+
+    &:hover:not(:disabled) {
+      background: variables.$clr-danger;
+      color: white;
+    }
+  }
+
+  &.button-control {
+    width: 100%;
+    &.btn-pause {
+      background: variables.$clr-warning;
+      color: black;
+      border: none;
+    }
+    &.btn-resume {
+      background: variables.$clr-success;
+      color: black;
+      border: none;
+    }
+  }
+}
+
+// Inputs
+input[type='text'],
+input[type='number'] {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: variables.$text-main;
+  padding: 0.6rem 1rem;
+  border-radius: variables.$radius-sm;
+  outline: none;
+  font-family: inherit;
+  transition: variables.$transition-fast;
+
+  &:focus {
+    border-color: variables.$clr-primary;
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+  }
+}
+
+.search-bar {
+  width: 300px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: variables.$text-muted;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap; // Que no se rompa el texto
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: variables.$text-main;
+    border: variables.$glass-border-light;
+  }
+
+  input {
+    margin: 0;
+    cursor: pointer;
+  }
+}
+
+// Checkboxes
+input[type='checkbox'] {
+  appearance: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+
+  &:checked {
+    background: variables.$clr-primary;
+    border-color: variables.$clr-primary;
+
+    &::after {
+      content: '✔';
+      font-size: 0.8rem;
+      color: black;
+      @include helpers.center-absolute;
+    }
+  }
+}
+
+// Badges
+.badge {
+  @include helpers.glass-panel;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+// --- RESULT CARD (User Row) ---
+
+.result-item {
+  @include helpers.glass-panel;
+  @include helpers.glass-panel-hover;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
+  min-height: 80px;
+
+  // --- FIX FINAL PARTE 1: Restringir el contenedor intermedio ---
+  // Seleccionamos el div directo que contiene avatar y texto (el .flex.grow)
+  > div.flex {
+    min-width: 0; // Permite que este contenedor se encoja si falta sitio
+  }
+  // -------------------------------------------------------------
+
+  .avatar-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      aspect-ratio: 1/1;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .avatar-icon-overlay-container {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    &:hover .avatar-icon-overlay-container {
+      opacity: 1;
+    }
+  }
+
+  // Info Text
+  .user-info {
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 0.5rem; // Un poco de aire antes del badge/checkbox
+
+    .user-link {
+      display: block;
+      width: 100%;
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-decoration: none;
+      color: variables.$text-main;
+
+      // --- CAMBIO CLAVE: Permitir que el texto baje de línea ---
+      white-space: normal; // Antes era nowrap
+      word-break: break-word; // Rompe palabras muy largas si es necesario
+      line-height: 1.2; // Altura de línea compacta
+      margin-bottom: 0.2rem;
+
+      &:hover {
+        color: variables.$clr-primary;
+      }
+    }
+
+    // Estilo para el nombre completo (el texto gris de abajo)
+    span.text-muted {
+      white-space: normal; // Permitir envoltura
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+  }
+
+  .verified-badge {
+    color: variables.$clr-primary;
+    font-size: 1.2rem;
+    flex-shrink: 0; // Que el badge no se aplaste
+  }
+
+  .private-indicator {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.1);
+    color: variables.$clr-success;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    flex-shrink: 0; // Que el indicador no se aplaste
+  }
+
+  .account-checkbox {
+    flex-shrink: 0;
+    margin-left: 0.5rem; // Reducimos un poco el margen para dar aire
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+// --- TABS ---
+
+.tabs-container {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.5rem;
+  border-radius: variables.$radius-main;
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.8rem;
+    cursor: pointer;
+    border-radius: variables.$radius-sm;
+    color: variables.$text-muted;
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &:hover {
+      color: variables.$text-main;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.tab-active {
+      background: variables.$clr-primary;
+      color: variables.$text-dark;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+  }
+}
+
+// --- EMPTY STATE ---
+
+.empty-state-container {
+  @include helpers.center-absolute;
+  @include helpers.glass-panel;
+  padding: 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 500px;
+
+  .empty-state-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(6, 182, 212, 0.1);
+    color: variables.$clr-primary;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    svg {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .empty-state-title {
+    font-size: 2rem;
+    margin: 0;
+    font-weight: 800;
+    background: linear-gradient(to right, #fff, #94a3b8);
+
+    /* ARREGLO: Añadimos la propiedad estándar */
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+  }
+
+  .run-scan-btn {
+    margin-top: 1rem;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, variables.$clr-primary, #3b82f6);
+    color: white;
+    border: none;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    border-radius: 50px;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.6);
+    }
+  }
+}
+
+// --- SETTINGS MODAL ---
+
+.backdrop {
+  position: fixed;
+  inset: 0; // Ocupa toda la pantalla
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8); // Un poco más oscuro
+  backdrop-filter: blur(5px);
+  z-index: variables.$z-index-modal;
+  display: flex;
+  justify-content: center;
+  align-items: center; // Esto centra verticalmente
+}
+
+.setting-menu {
+  @include helpers.glass-panel;
+  width: 90%;
+  max-width: 500px; // Un poco más estrecho para que se vea mejor
+  max-height: 90vh; // IMPORTANTE: Nunca más alto que la pantalla
+  overflow-y: auto; // IMPORTANTE: Scroll si no cabe
+  padding: 2rem;
+  background: variables.$bg-app-overlay;
+  display: flex;
+  flex-direction: column;
+
+  h3 {
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    label {
+      font-size: 0.9rem;
+      flex: 1;
+      margin-right: 10px;
+    }
+    input {
+      width: 100px;
+      text-align: center;
+    }
+  }
+
+  .warning-container {
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    padding: 1rem;
+    border-radius: variables.$radius-sm;
+    margin: 1.5rem 0;
+    text-align: center;
+
+    .warning {
+      color: variables.$clr-warning;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
+
+  .btn-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    .btn-primary {
+      background: variables.$clr-primary;
+      color: black;
+    }
+  }
+}
+
+// --- TOAST ---
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  color: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: variables.$z-index-toast;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 400px;
+  border-left: 5px solid variables.$clr-primary;
+
+  &.error {
+    border-color: variables.$clr-danger;
+    .toast__icon {
+      color: variables.$clr-danger;
+    }
+  }
+  &.success {
+    border-color: variables.$clr-success;
+    .toast__icon {
+      color: variables.$clr-success;
+    }
+  }
+
+  .toast__message {
+    margin: 0;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  .toast__close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    padding: 0;
+    width: auto;
+    height: auto;
+    &:hover {
+      color: #000;
+      background: none;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.alphabet-character {
+  grid-column: 1 / -1;
+  font-size: 2rem;
+  font-weight: 800;
+  color: variables.$clr-primary;
+  border-bottom: 2px solid variables.$clr-primary;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.unfollow-log-container {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  @include helpers.custom-scrollbar;
+
+  // ARREGLO SCROLL 4: Altura para el log también
+  height: 100%;
+
+  .p-medium {
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .clr-cyan {
+    color: variables.$clr-primary;
+  }
+  .clr-red {
+    color: variables.$clr-danger;
+  }
+  .clr-green {
+    color: variables.$clr-success;
+  }
+}
+
+// ==========================================
+// MODO MÓVIL / RESPONSIVE (Añadir al final)
+// ==========================================
+
+@media (max-width: variables.$mobile-break) {
+  // 1. AJUSTAR HEADER
+  .app-header {
+    height: 60px; // Un poco más bajo
+
+    .app-header-content {
+      padding: 0 1rem;
+
+      .logo {
+        .app-logo {
+          width: 32px;
+          height: 32px;
+        }
+        .logo-text {
+          font-size: 0.75rem;
+        } // Texto más pequeño
+      }
+
+      // La barra de búsqueda se hace más pequeña o flexible
+      .search-bar {
+        width: 140px;
+        font-size: 0.85rem;
+        &:focus {
+          width: 180px;
+        } // Crece al escribir
+      }
+
+      button.copy-list {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  // 2. CAMBIAR DISPOSICIÓN PRINCIPAL (De lado a columna)
+  .overlay > section.flex {
+    flex-direction: column; // Sidebar arriba, Resultados abajo
+    height: calc(100vh - 60px); // Ajuste a la nueva altura del header
+    margin-top: 60px;
+  }
+
+  // 3. BARRA LATERAL (CONTROLES)
+  .app-sidebar {
+    width: 100%; // Ocupa todo el ancho
+    min-width: 0; // Resetear min-width
+    height: auto; // Altura automática
+    max-height: 35vh; // IMPORTANTE: Solo ocupa el 35% de la pantalla para dejar ver resultados
+    border-right: none;
+    border-bottom: variables.$glass-border; // Borde abajo en vez de derecha
+    padding: 1rem;
+    flex-direction: row; // Intentar poner controles en fila si caben
+    flex-wrap: wrap; // Que bajen si no caben
+    gap: 1rem;
+    align-items: center; // Alinear verticalmente
+
+    // Ajustes internos del sidebar para que se vean bien en horizontal
+    menu {
+      flex-direction: row !important; // Filtros en horizontal
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      width: 100%;
+
+      p {
+        width: 100%;
+        margin-bottom: 0.2rem;
+      } // Título "Filters"
+    }
+
+    .stats-box {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .controls {
+      width: 100%;
+      margin: 0;
+    }
+    .pagination-controls {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    // Botón unfollow ancho completo abajo del todo
+    .unfollow {
+      margin-top: 0.5rem;
+    }
+  }
+
+  // 4. CONTENEDOR DE RESULTADOS
+  .results-container {
+    padding: 1rem; // Menos padding
+
+    // Grid adaptable a móviles (1 columna o 2 pequeñas)
+    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+
+    .result-item {
+      padding: 0.8rem; // Tarjetas más compactas
+
+      .avatar-container {
+        width: 50px;
+        height: 50px; // Avatar un pelín más pequeño
+      }
+
+      .user-info {
+        .user-link {
+          font-size: 1rem;
+        }
+        span.text-muted {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+
+  // 5. EMPTY STATE (Pantalla de inicio)
+  .empty-state-container {
+    width: 90%;
+    padding: 2rem;
+
+    .empty-state-icon svg {
+      width: 30px;
+      height: 30px;
+    }
+    .empty-state-title {
+      font-size: 1.5rem;
+    }
+
+    .run-scan-btn {
+      width: 100%;
+      padding: 1rem;
+    }
+  }
+
+  // 6. MODAL SETTINGS
+  .setting-menu {
+    width: 95%;
+    max-height: 80vh;
+    padding: 1rem;
+
+    .row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      input {
+        width: 100%;
+        text-align: left;
+      }
+      .margin-between-input-and-label {
+        display: none;
+      }
+    }
+
+    .btn-container {
+      position: static;
+      margin-top: 1rem;
+      width: 100%;
+
+      .btn {
+        flex: 1;
+      }
+    }
+  }
+}
