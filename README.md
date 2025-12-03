@@ -16,7 +16,7 @@
 **The safest, open-source tool to see who unfollowed you on Instagram.**
 Unlike other outdated tools, this script uses **Shadow DOM** to run invisibly and safely on your browser.
 
-> **🚀 New v2.0:** Features a stunning **Glassmorphism UI**, fully responsive mobile design, and **Anti-Ban protection**.
+> **🚀 New v3.1.0:** Features a stunning **Glassmorphism UI**, fully responsive mobile design, and **Anti-Ban protection**.
 
 ### ✨ Why choose this over others?
 
@@ -52,7 +52,7 @@ Most "Unfollowers" apps steal your password or get you banned. **Instagram Unfol
 **La herramienta más segura y moderna para ver quién no te sigue en Instagram.**
 A diferencia de otras herramientas viejas o aplicaciones de pago, este script es de código abierto, gratuito y **no requiere tu contraseña**.
 
-> **🚀 Nuevo v2.0:** Interfaz moderna (Glassmorphism), compatible con móviles y con **Protección Anti-Bloqueo**.
+> **🚀 Nuevo v3.1.0:** Interfaz moderna (Glassmorphism), compatible con móviles y con **Protección Anti-Bloqueo**.
 
 ### ✨ Características Principales
 
