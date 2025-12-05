@@ -269,7 +269,32 @@ export const Searching = ({
                       {user.full_name}
                     </span>
                   </div>
-                  {user.is_verified && <div className='verified-badge'>✔</div>}
+                  {user.is_verified && (
+                    <div
+                      className='verified-badge'
+                      style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      <svg
+                        width='18'
+                        height='18'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        xmlns='http://www.w3.org/2000/svg'
+                      >
+                        <path
+                          d='M12.0001 2L14.7105 4.31686L18.2323 3.99307L19.3879 7.33923L22.646 8.91307L22.0944 12.3999L24.0001 15.178L21.579 17.8427L21.4393 21.393L17.9734 22.0305L15.6843 24.6291L12.4497 23.3333L9.21517 24.6291L6.926 22.0305L3.46014 21.393L3.32044 17.8427L0.899323 15.178L2.80501 12.3999L2.25338 8.91307L5.51147 7.33923L6.66711 3.99307L10.1889 4.31686L12.0001 2Z'
+                          fill='#06b6d4'
+                        />
+                        <path
+                          d='M17 9L10 16L7 13'
+                          stroke='white'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                        />
+                      </svg>
+                    </div>
+                  )}
                   {user.is_private && <div className='private-indicator'>Private</div>}
                 </div>
                 <input
