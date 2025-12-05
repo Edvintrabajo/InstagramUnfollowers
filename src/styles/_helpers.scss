@@ -1,0 +1,146 @@
+@use 'variables';
+
+// --- MIXINS (Efectos Reutilizables) ---
+
+// El efecto cristal clave
+@mixin glass-panel {
+  background: variables.$bg-panel;
+  backdrop-filter: variables.$backdrop-blur;
+  -webkit-backdrop-filter: variables.$backdrop-blur; // Safari support
+  border: variables.$glass-border;
+  box-shadow: variables.$shadow-lg;
+  border-radius: variables.$radius-main;
+}
+
+@mixin glass-panel-hover {
+  transition: variables.$transition-fast;
+  &:hover {
+    background: variables.$bg-panel-hover;
+    border: variables.$glass-border-light;
+    transform: translateY(-2px);
+    box-shadow: variables.$shadow-glow;
+  }
+}
+
+// Scrollbar personalizado (delgado y oscuro)
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: variables.$radius-round;
+    &:hover {
+      background: variables.$clr-primary;
+    }
+  }
+}
+
+// Centrado absoluto rápido
+@mixin center-absolute {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// --- UTILIDADES FLEXBOX ---
+
+.flex {
+  display: flex;
+  gap: variables.$size-small;
+
+  &.column {
+    flex-direction: column;
+  }
+
+  &.align-center {
+    align-items: center;
+  }
+
+  &.justify-center {
+    justify-content: center;
+  }
+
+  &.justify-between {
+    justify-content: space-between;
+  }
+
+  &.grow {
+    flex: 1;
+  }
+
+  &.wrap {
+    flex-wrap: wrap;
+  }
+}
+
+// --- ESPACIADOS ---
+
+.m-clear {
+  margin: 0 !important;
+}
+.p-clear {
+  padding: 0 !important;
+}
+
+.m-small {
+  margin: variables.$size-small;
+}
+.m-medium {
+  margin: variables.$size-medium;
+}
+
+.p-small {
+  padding: variables.$size-small;
+}
+.p-medium {
+  padding: variables.$size-medium;
+}
+
+// --- TEXTOS ---
+
+.t-center {
+  text-align: center;
+}
+.fw-bold {
+  font-weight: 600;
+}
+
+.fs-small {
+  font-size: 0.85rem;
+}
+.fs-medium {
+  font-size: 1rem;
+}
+.fs-large {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.fs-xlarge {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.text-muted {
+  color: variables.$text-muted;
+}
+.text-main {
+  color: variables.$text-main;
+}
+
+// --- UTILIDADES DE VISIBILIDAD ---
+
+.d-none {
+  display: none;
+}
+.w-100 {
+  width: 100%;
+}
+.pos-relative {
+  position: relative;
+}

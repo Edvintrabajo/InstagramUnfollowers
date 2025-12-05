@@ -1,0 +1,161 @@
+import { UserNode } from '../model/user';
+import { UNFOLLOWERS_PER_PAGE, WITHOUT_PROFILE_PICTURE_URL_IDS } from '../constants/constants';
+import { ScanningTab } from '../model/scanning-tab';
+import { ScanningFilter } from '../model/scanning-filter';
+import { UnfollowLogEntry } from '../model/unfollow-log-entry';
+import { UnfollowFilter } from '../model/unfollow-filter';
+
+/**
+ * Copies the list of usernames to the clipboard.
+ * Returns a Promise that resolves when successful.
+ * Removed the 'alert' to handle UI feedback in the component.
+ */
+export async function copyListToClipboard(nonFollowersList: readonly UserNode[]): Promise<void> {
+  const sortedList = [...nonFollowersList].sort((a, b) => a.username.localeCompare(b.username));
+
+  const output = sortedList.map(user => user.username).join('\n');
+
+  await navigator.clipboard.writeText(output);
+}
+
+export function getMaxPage(nonFollowersList: readonly UserNode[]): number {
+  const pageCalc = Math.ceil(nonFollowersList.length / UNFOLLOWERS_PER_PAGE);
+  return pageCalc < 1 ? 1 : pageCalc;
+}
+
+export function getCurrentPageUnfollowers(
+  nonFollowersList: readonly UserNode[],
+  currentPage: number,
+): readonly UserNode[] {
+  // Using localeCompare is better for string sorting
+  const sortedList = [...nonFollowersList].sort((a, b) => a.username.localeCompare(b.username));
+
+  // Use slice instead of splice to avoid mutation confusion (although we cloned it)
+  const startIndex = UNFOLLOWERS_PER_PAGE * (currentPage - 1);
+  return sortedList.slice(startIndex, startIndex + UNFOLLOWERS_PER_PAGE);
+}
+
+export function getUsersForDisplay(
+  results: readonly UserNode[],
+  whitelistedResults: readonly UserNode[],
+  currentTab: ScanningTab,
+  searchTerm: string,
+  filter: ScanningFilter,
+): readonly UserNode[] {
+  const lowerSearchTerm = searchTerm.toLowerCase();
+
+  return results.filter(user => {
+    const isWhitelisted = whitelistedResults.some(w => w.id === user.id);
+
+    // 1. Tab Filtering
+    if (currentTab === 'non_whitelisted' && isWhitelisted) {
+      return false;
+    }
+    if (currentTab === 'whitelisted' && !isWhitelisted) {
+      return false;
+    }
+
+    // 2. Checkbox Filters
+    if (!filter.showPrivate && user.is_private) {
+      return false;
+    }
+    if (!filter.showVerified && user.is_verified) {
+      return false;
+    }
+    if (!filter.showFollowers && user.follows_viewer) {
+      return false;
+    }
+    if (!filter.showNonFollowers && !user.follows_viewer) {
+      return false;
+    }
+
+    if (
+      !filter.showWithOutProfilePicture &&
+      WITHOUT_PROFILE_PICTURE_URL_IDS.some(id => user.profile_pic_url.includes(id))
+    ) {
+      return false;
+    }
+
+    // 3. Search Term
+    if (searchTerm !== '') {
+      const matchesSearch =
+        user.username.toLowerCase().includes(lowerSearchTerm) ||
+        user.full_name.toLowerCase().includes(lowerSearchTerm);
+
+      if (!matchesSearch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+export function getUnfollowLogForDisplay(
+  log: readonly UnfollowLogEntry[],
+  searchTerm: string,
+  filter: UnfollowFilter,
+) {
+  const lowerSearchTerm = searchTerm.toLowerCase();
+
+  return log.filter(entry => {
+    if (!filter.showSucceeded && entry.unfollowedSuccessfully) {
+      return false;
+    }
+    if (!filter.showFailed && !entry.unfollowedSuccessfully) {
+      return false;
+    }
+
+    if (searchTerm !== '') {
+      const matchesSearch = entry.user.username.toLowerCase().includes(lowerSearchTerm);
+      if (!matchesSearch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Exhaustive check for switch-case statements.
+ */
+export function assertUnreachable(_value: never): never {
+  throw new Error('Statement should be unreachable');
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function getCookie(name: string): string | null {
+  // Regex is safer and more robust than string splitting for cookies
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) {
+    return match[2];
+  }
+  return null;
+}
+
+export function urlGenerator(nextCode?: string): string {
+  const ds_user_id = getCookie('ds_user_id');
+
+  // NOTE: This query_hash is specific to Instagram's API version.
+  // If IG updates their API, this hash might need to be updated.
+  const QUERY_HASH = '3dec7e2c57367ef3da3d987d89f9dbc8';
+
+  // We construct the JSON string manually to ensure 'after' is only added if it exists,
+  // matching the original logic string strictness.
+  let variablesString = `{"id":"${ds_user_id}","include_reel":"true","fetch_mutual":"false","first":"24"`;
+
+  if (nextCode) {
+    variablesString += `,"after":"${nextCode}"`;
+  }
+  variablesString += '}';
+
+  return `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH}&variables=${variablesString}`;
+}
+
+export function unfollowUserUrlGenerator(idToUnfollow: string): string {
+  return `https://www.instagram.com/web/friendships/${idToUnfollow}/unfollow/`;
+}
