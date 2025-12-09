@@ -679,8 +679,20 @@
       const bookmarkletLink = document.getElementById('bookmarklet-link');
 
       // 1. Mostrar el código
-      if (instagramScript && instagramScript.length > 10) {
+      /* if (instagramScript && instagramScript.length > 10) {
         codeDisplay.textContent = instagramScript;
+      } else {
+        codeDisplay.textContent = '// Paste the script in index.html to see it here.';
+      } */
+
+      // 1. Mostrar el código (OPTIMIZADO PARA PREVIEW)
+      if (instagramScript && instagramScript.length > 10) {
+        // Cortamos el string visualmente para que Prism/Chrome no exploten
+        // Mantenemos solo los primeros 500 caracteres + un mensaje
+        const previewText = instagramScript.substring(0, 500) + 
+          "\n\n/* ... [Full script hidden for performance. Click 'Copy Script' to get the full code] ... */";
+        
+        codeDisplay.textContent = previewText;
       } else {
         codeDisplay.textContent = '// Paste the script in index.html to see it here.';
       }
